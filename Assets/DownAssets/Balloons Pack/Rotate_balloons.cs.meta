@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 37a1c86bef97e364b823d664ec9d2f82
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 275621
+  packageName: 3D Game Kit - balloons animals triple match
+  packageVersion: 1.0
+  assetPath: Assets/Balloons Pack/Rotate_balloons.cs
+  uploadId: 654658
