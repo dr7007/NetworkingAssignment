@@ -50,6 +50,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
     // InputField_NickName과 연결해 닉네임을 가져옴
     public void OnValueChangedNickName(string _nickName)
     {
+        // 입력받은 닉네임을 Field에 저장
         nickName = _nickName;
 
         // 유저 이름 지정
@@ -58,25 +59,29 @@ public class LoginManager : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
+        // 포톤 클라우드에 해당 nickName으로 접속했다는 로그 출력
         Debug.LogFormat("Connected to Master: {0}", nickName);
 
+        // 로그인 버튼과의 상호작용 비활성화
         connectButton.interactable = false;
 
+        // 포톤 클라우드 내 랜덤한 룸에 접속 시도
         PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
+        // 룸에서 연결이 끊어진 경우
         Debug.LogWarningFormat("Disconnected: {0}", cause);
 
         connectButton.interactable = true;
     }
     public override void OnJoinedRoom()
     {
+        // 룸에 입장 성공했다는 로그를 출력.
         Debug.Log("Joined Room");
 
-        // 마스터가 동시에 게임을 시작하게하는 구조가 아니기 때문에 각자 씬을 부르면 됨
-        
+        // 로비에서 모여서 게임을 시작하게 될 것이므로 조인하는 대로 메인로비 씬으로 이동.
         SceneManager.LoadScene("MainLobby");
     }
 
