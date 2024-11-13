@@ -72,7 +72,7 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Photon directory
-/[Aa]ssets/Photon
+**/[Aa]ssets/Photon/
 
 # TextMesh Pro directory
-/[Aa]ssets/TextMesh Pro
+**/[Aa]ssets/TextMesh Pro/
