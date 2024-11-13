@@ -76,3 +76,6 @@ crashlytics-build.properties
 
 # TextMesh Pro directory
 **/[Aa]ssets/TextMesh Pro/
+
+# Unity Packages directory
+**/[Pp]ackages/
