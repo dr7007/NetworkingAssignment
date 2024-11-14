@@ -76,10 +76,11 @@ public class NAGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ApplyPlayerList()
     {
-        // 현재 방에 접속해 있는 플레이어의 수
+        // 현재 방에 접속해 있는 플레이어의 수 로그 및 UI에 표기
         Debug.LogError("CurrentRoom PlayerCount : " + PhotonNetwork.CurrentRoom.PlayerCount);
         uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/4").ToString();
-        uiNRoom.text = ("RoomID :\n" + System.String.Format("{0:D5}", PhotonNetwork.CountOfRooms)).ToString();
+        // 이동 필요... 구조상 여기 있을시 제대로 된 방 ID가 아님.
+        uiNRoom.text = ("RoomID :\n" + System.String.Format("{0:D5}", PhotonNetwork.CountOfRooms + 1)).ToString();
 
         // 현재 생성되어 있는 모든 포톤뷰 가져오기
         //PhotonView[] photonViews = FindObjectsOfType<PhotonView>();
