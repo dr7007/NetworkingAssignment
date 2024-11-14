@@ -11,50 +11,128 @@ public class LoginManager : MonoBehaviourPunCallbacks
     [SerializeField] private string gameVersion = "0.0.1";
     [SerializeField] private byte maxPlyaerPerRoom = 3;
 
+    // RoomID 저장용 Field
+    [SerializeField] private string RoomID = string.Empty;
+
     // 닉네임 저장용 Field
     [SerializeField] private string nickName = string.Empty;
 
-    // 접속용 버튼 component
-    [SerializeField] private Button connectButton = null;
+    // 방 생성 및 방 참가 버튼 컴포넌트
+    [SerializeField] private Button joinRoomButton = null;
+    [SerializeField] private Button createRoomButton = null;
+
+    [SerializeField] private GameObject nickNameUIGo = null;
+    [SerializeField] private GameObject roomIDUIGo = null;
+
+    private bool isCreate = false;
 
     private void Start()
     {
-        // 버튼 활성화
-        connectButton.interactable = true;
+        // NickName UI 활성화
+        nickNameUIGo.SetActive(true);
+        // RoomID UI 비활성화
+        roomIDUIGo.SetActive(false);
+        
+        isCreate = false;
     }
 
-    // Connect Button이 눌러지면 호출
-    public void Connect()
+    // InputField_NickName과 연결해 닉네임을 가져옴
+    public void OnValueChangedNickName(string _nickName)
     {
-        // 닉네임 칸이 비어있을시 로그 반환
+        nickName = _nickName;
+
+        // 유저 이름 지정
+        PhotonNetwork.NickName = nickName;
+    }
+
+    public void OnValueChangedRoomID(string _roomID)
+    {
+        RoomID = _roomID;
+    }
+
+    // 방생성 and 방참가 버튼 활성화/비활성화 메소드
+    private void SwitchButtonActive()
+    {
+        createRoomButton.interactable = !createRoomButton.interactable;
+        joinRoomButton.interactable = !joinRoomButton.interactable;
+    }
+    public void CreateRoom()
+    {
+        isCreate = true;
+        if (string.IsNullOrEmpty(nickName))
+        {
+            isCreate = false;
+
+            Debug.Log("NickName is empty");
+            return;
+        }
+
+        if (PhotonNetwork.IsConnected)
+        {
+            SwitchButtonActive();
+            Debug.Log("Create Room");
+            PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlyaerPerRoom });
+        }
+        else
+        {
+            Debug.LogFormat("Connect : {0}", gameVersion);
+
+            PhotonNetwork.GameVersion = gameVersion;
+            // 포톤 클라우드에 접속을 시작하는 지점
+            // 접속에 성공하면 OnConnectedToMaster 메서드 호출
+            PhotonNetwork.ConnectUsingSettings();
+        }
+    }
+    // Connect Button이 눌러지면 호출
+    public void JoinRoom()
+    {
+        isCreate = false;
         if (string.IsNullOrEmpty(nickName))
         {
             Debug.Log("NickName is empty");
             return;
         }
 
-        // 포톤 클라우드에 연결되어 있을때 랜덤 룸에 입장시도
-        if (PhotonNetwork.IsConnected)
-            PhotonNetwork.JoinRandomRoom();
+        if (string.IsNullOrEmpty(RoomID))
+        {
+            // 포톤 클라우드에 연결되어 있을때 랜덤 룸에 입장시도
+            if (PhotonNetwork.IsConnected)
+                    PhotonNetwork.JoinRandomRoom();
+            else
+            {
+                // 포톤 클라우드에 연결되어 있지 않은 경우 포톤 클라우드에 접속을 시작
+                Debug.LogFormat("Connect : {0}", gameVersion);
+
+                PhotonNetwork.GameVersion = gameVersion;
+                // 접속에 성공하면 OnConnectedToMaster 메서드 호출
+                PhotonNetwork.ConnectUsingSettings();
+            }
+        }
+        else if(RoomID.Length < 5)
+        {
+            Debug.Log("RoomID must Numbers of 5!");
+            return;
+        }
         else
         {
-            // 포톤 클라우드에 연결되어 있지 않은 경우 포톤 클라우드에 접속을 시작
-            Debug.LogFormat("Connect : {0}", gameVersion);
-            
-            PhotonNetwork.GameVersion = gameVersion;
-            // 접속에 성공하면 OnConnectedToMaster 메서드 호출
-            PhotonNetwork.ConnectUsingSettings();
+            if (PhotonNetwork.IsConnected)
+                PhotonNetwork.JoinRoom(RoomID);
+            else
+            {
+                Debug.LogWarning("Join but No Connection master!");
+                return;
+            }
         }
     }
 
     // InputField_NickName과 연결해 닉네임을 가져옴
-    public void OnValueChangedNickName(string _nickName)
+    public void Connect()
     {
-        // 입력받은 닉네임을 Field에 저장
-        nickName = _nickName;
-
-        // 유저 이름 지정
-        PhotonNetwork.NickName = nickName;
+        Debug.Log("Connect Call!");
+        // NickName UI 활성화
+        nickNameUIGo.SetActive(false);
+        // RoomID UI 비활성화
+        roomIDUIGo.SetActive(true);
     }
 
     public override void OnConnectedToMaster()
@@ -62,11 +140,19 @@ public class LoginManager : MonoBehaviourPunCallbacks
         // 포톤 클라우드에 해당 nickName으로 접속했다는 로그 출력
         Debug.LogFormat("Connected to Master: {0}", nickName);
 
-        // 로그인 버튼과의 상호작용 비활성화
-        connectButton.interactable = false;
+        // 방참가/방생성 버튼과의 상호작용 비활성화
+        SwitchButtonActive();
 
         // 포톤 클라우드 내 랜덤한 룸에 접속 시도
-        PhotonNetwork.JoinRandomRoom();
+        if (isCreate)
+        {
+            Debug.Log("Create Room");
+            PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlyaerPerRoom });
+        }
+        else
+        {
+            PhotonNetwork.JoinRandomRoom();
+        }
     }
 
     public override void OnDisconnected(DisconnectCause cause)
@@ -74,7 +160,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
         // 룸에서 연결이 끊어진 경우
         Debug.LogWarningFormat("Disconnected: {0}", cause);
 
-        connectButton.interactable = true;
+        createRoomButton.interactable = true;
     }
     public override void OnJoinedRoom()
     {
@@ -89,8 +175,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
     {
         Debug.LogErrorFormat("JoinRandomFailed({0}): {1}", returnCode, message);
 
-        connectButton.interactable = true;
-        Debug.Log("Create Room");
-        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlyaerPerRoom });
+        createRoomButton.interactable = true;
+        joinRoomButton.interactable = true;
     }
 }
