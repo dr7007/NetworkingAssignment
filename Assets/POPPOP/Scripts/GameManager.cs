@@ -17,15 +17,29 @@ public class GameManager : MonoBehaviour
     private float gameTime = 60f;        // 게임 제한 시간 (60초로 설정)
     private bool isMultiplayer = false;  // 멀티플레이 환경인지 여부 확인용 변수
 
+    public GameObject endGameParticles; // 파티클 오브젝트 추가
+
     void Start()
     {
         resultPanel.SetActive(false); // 시작할 때 결과 패널을 숨기기
 
+        endGameParticles.SetActive(false); // 시작할 때 파티클 비활성화
+
+        scoreText.gameObject.SetActive(false); // 스코어 텍스트 비활성화
+
         // Photon이 연결된 멀티플레이어 환경인지 확인
         isMultiplayer = PhotonNetwork.IsConnected;
+        // 1초 후에 스코어 텍스트 활성화 및 풍선 생성 시작
+        Invoke("ShowScoreAndStartSpawning", 1f);
+    }
 
-        // SpawnBalloon을 주기적으로 호출하여 풍선을 생성
-        InvokeRepeating("SpawnBalloon", 1f, 2f);
+    void ShowScoreAndStartSpawning()
+    {
+        // 스코어 텍스트를 보이게 설정
+        scoreText.gameObject.SetActive(true);
+
+        // 주기적으로 풍선 생성 시작
+        InvokeRepeating("SpawnBalloon", 0f, 2f); // 바로 시작, 2초 간격으로 반복
     }
 
     void Update()
@@ -92,5 +106,7 @@ public class GameManager : MonoBehaviour
         resultPanel.SetActive(true); // 결과 패널 표시
         resultText.text = "Final Score: " + score; // 최종 점수 표시
         CancelInvoke("SpawnBalloon"); // 풍선 생성 중지
+
+        endGameParticles.SetActive(true); // 게임이 끝날 때 파티클 활성화
     }
 }
