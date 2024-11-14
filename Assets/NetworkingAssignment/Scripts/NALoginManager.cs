@@ -9,7 +9,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
 {
     // 게임 버전 및 최대 플레이 인원 수 Field
     [SerializeField] private string gameVersion = "0.0.1";
-    [SerializeField] private byte maxPlyaerPerRoom = 3;
+    [SerializeField] private byte maxPlyaerPerRoom = 4;
 
     // 닉네임 저장용 Field
     [SerializeField] private string nickName = string.Empty;
