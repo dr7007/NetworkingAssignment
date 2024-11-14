@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
         scoreText.gameObject.SetActive(true);
 
         // 주기적으로 풍선 생성 시작
-        InvokeRepeating("SpawnBalloon", 0f, 2f); // 바로 시작, 2초 간격으로 반복
+        InvokeRepeating("SpawnBalloon", 0f, 0.5f); // 바로 시작, n초 간격으로 반복
     }
 
     void Update()
