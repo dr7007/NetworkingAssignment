@@ -4,7 +4,7 @@ using Photon.Pun;
 using UnityEngine.SceneManagement;
 using TMPro;
 
-public class NAGameManager : MonoBehaviourPunCallbacks
+public class NALobbyManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameObject playerPrefab = null;
 
@@ -17,11 +17,14 @@ public class NAGameManager : MonoBehaviourPunCallbacks
     private TextMeshProUGUI uiNRoom = null;
     private TextMeshProUGUI uiNPlayer = null;
 
+    private int curNumP = 0;
+
     private void Start()
     {
         uiMngGo = FindAnyObjectByType<Canvas>().gameObject;
         uiNRoom = uiMngGo.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
         uiNPlayer = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        curNumP = 0;
 
         uiNRoom.text = "Room ID : \nNULL";
         uiNPlayer.text = "Number of Player : \n0/4";
@@ -49,7 +52,7 @@ public class NAGameManager : MonoBehaviourPunCallbacks
                 Quaternion.identity,
                 0);
         playerCtrl = go.GetComponent<NAPlayerCtrl>();
-        playerCtrl.SetMaterial(PhotonNetwork.CurrentRoom.PlayerCount);
+        ++curNumP;
 
         // Remote Procedure Call
         photonView.RPC("ApplyPlayerList", RpcTarget.All);
@@ -109,7 +112,6 @@ public class NAGameManager : MonoBehaviourPunCallbacks
 
                 // 다른 플레이어의 색상 부여 - 과제 1 (완료)
                 otherCtrl = photonViews[j].gameObject.GetComponent<NAPlayerCtrl>();
-                otherCtrl.SetMaterial(viewNum);
 
                 // 접속중인 플레이어의 액터넘버
                 int playerNum = PhotonNetwork.CurrentRoom.Players[key].ActorNumber;
