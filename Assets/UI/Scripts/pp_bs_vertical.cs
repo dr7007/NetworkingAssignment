@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class pp_bs_horizontal : MonoBehaviour
+public class pp_bs_vertical : MonoBehaviour
 {
     public float speed = 1f;              // 스크롤 속도
     public RectTransform image1;          // 첫 번째 이미지

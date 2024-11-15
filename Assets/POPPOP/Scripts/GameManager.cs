@@ -90,7 +90,8 @@ public class GameManager : MonoBehaviour
     {
         float x = Random.Range(-8f, 8f);
         float y = Random.Range(-4f, 4f);
-        return new Vector3(x, y, 0);
+        float z = -1f;
+        return new Vector3(x, y, z);
     }
 
     // 점수를 추가하고 UI를 갱신하는 함수

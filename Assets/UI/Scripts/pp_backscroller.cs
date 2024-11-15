@@ -33,7 +33,4 @@ public class BackgroundScroller : MonoBehaviour
             image2.anchoredPosition = new Vector2(image1.anchoredPosition.x + imageWidth, image2.anchoredPosition.y);
         }
     }
-
-
-
 }
