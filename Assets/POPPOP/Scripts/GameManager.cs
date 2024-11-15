@@ -2,6 +2,7 @@
 using UnityEngine;
 using Photon.Pun; // Photon 네트워크를 사용하는 경우 사용
 using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -29,12 +30,14 @@ public class GameManager : MonoBehaviour
 
         // Photon이 연결된 멀티플레이어 환경인지 확인
         isMultiplayer = PhotonNetwork.IsConnected;
+        
         // 1초 후에 스코어 텍스트 활성화 및 풍선 생성 시작
         Invoke("ShowScoreAndStartSpawning", 1f);
     }
 
     void ShowScoreAndStartSpawning()
     {
+
         // 스코어 텍스트를 보이게 설정
         scoreText.gameObject.SetActive(true);
 

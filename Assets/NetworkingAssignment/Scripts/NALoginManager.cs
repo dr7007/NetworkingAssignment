@@ -24,21 +24,42 @@ public class LoginManager : MonoBehaviourPunCallbacks
 
     [SerializeField] private GameObject nickNameUIGo = null;
     [SerializeField] private GameObject roomIDUIGo = null;
+    [SerializeField] private GameObject mainUIGo = null;
 
     private bool isCreate = false;
     private RoomOptions roomopt = new RoomOptions();
+    private bool isOpening = true;
     
     
 
     private void Start()
     {
+        mainUIGo.SetActive(true);
         // NickName UI 활성화
-        nickNameUIGo.SetActive(true);
+        nickNameUIGo.SetActive(false);
         // RoomID UI 비활성화
         roomIDUIGo.SetActive(false);
         
         isCreate = false;
         roomopt.MaxPlayers = maxPlyaerPerRoom;
+        isOpening = true;
+    }
+    private void Update()
+    {
+        if (isOpening)
+        {
+            if (Input.anyKeyDown)
+            {
+                isOpening = false;
+                OpeningPhase();
+            }
+        }
+    }
+
+    private void OpeningPhase()
+    {
+        mainUIGo.SetActive(false);
+        nickNameUIGo.SetActive(true);
     }
 
     // InputField_NickName과 연결해 닉네임을 가져옴

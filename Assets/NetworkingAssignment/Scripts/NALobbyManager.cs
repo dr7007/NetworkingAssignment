@@ -30,12 +30,12 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
             Invoke("SpawnPlayer", 0.5f);
         }
 
-        uiMngGo = FindAnyObjectByType<Canvas>().gameObject;
-        uiNRoom = uiMngGo.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-        uiNPlayer = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        uiMngGo = FindFirstObjectByType<Canvas>().gameObject;
+        uiNRoom = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        uiNPlayer = uiMngGo.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
 
-        uiNRoom.text = ("RoomID :\n" + PhotonNetwork.CurrentRoom.Name).ToString();
-        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
+        uiNRoom.text = (PhotonNetwork.CurrentRoom.Name).ToString();
+        uiNPlayer.text = (PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
 
     }
 
@@ -134,6 +134,7 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
         SetPositionPlayer();
     }
 
+
     private void SetPositionPlayer()
     {
         foreach(GameObject player in playerGoList)
@@ -165,5 +166,10 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
         Debug.Log("Leave Room");
 
         PhotonNetwork.LeaveRoom();
+    }
+
+    public void TempNext()
+    {
+        SceneManager.LoadScene("GameScene");
     }
 }
