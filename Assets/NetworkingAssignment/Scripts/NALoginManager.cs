@@ -114,7 +114,6 @@ public class LoginManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Create Room");
             PhotonNetwork.CreateRoom(System.String.Format("{0:D5}", PhotonNetwork.CountOfRooms + 1), roomopt);
-            SwitchButtonActive();
         }
     }
     // Connect Button이 눌러지면 호출

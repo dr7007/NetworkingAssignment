@@ -76,7 +76,7 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
         Debug.LogFormat("Player Entered Room: {0}",
                         otherPlayer.NickName);
 
-        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
+        uiNPlayer.text = (PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
 
         // 누군가 접속하면 전체 클라이언트에서 함수 호출
         //photonView.RPC("ApplyPlayerList", RpcTarget.All);
@@ -134,12 +134,11 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
         SetPositionPlayer();
     }
 
-
     private void SetPositionPlayer()
     {
-        foreach(GameObject player in playerGoList)
+        for(int i = 0; i > playerGoList.Length; ++i)
         {
-
+            playerGoList[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -500f - 100 * i);
         }
     }
     private void PrintPlayerList()
