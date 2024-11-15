@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
 
+
 public class LoginManager : MonoBehaviourPunCallbacks
 {
     // 게임 버전 및 최대 플레이 인원 수 Field
@@ -25,6 +26,9 @@ public class LoginManager : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject roomIDUIGo = null;
 
     private bool isCreate = false;
+    private RoomOptions roomopt = new RoomOptions();
+    
+    
 
     private void Start()
     {
@@ -34,6 +38,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
         roomIDUIGo.SetActive(false);
         
         isCreate = false;
+        roomopt.MaxPlayers = maxPlyaerPerRoom;
     }
 
     // InputField_NickName과 연결해 닉네임을 가져옴
@@ -56,6 +61,23 @@ public class LoginManager : MonoBehaviourPunCallbacks
         createRoomButton.interactable = !createRoomButton.interactable;
         joinRoomButton.interactable = !joinRoomButton.interactable;
     }
+
+    private void ButtonActive()
+    {
+        createRoomButton.interactable = true;
+        joinRoomButton.interactable = true;
+    }
+
+    private bool RoomIDCompare()
+    {
+        for(int i = 0; i < PhotonNetwork.CountOfRooms; ++i)
+        {
+            if (RoomID == System.String.Format("{0:D5}", i + 1))
+                return true;
+        }
+        return false;
+    }
+
     public void CreateRoom()
     {
         isCreate = true;
@@ -69,18 +91,9 @@ public class LoginManager : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsConnected)
         {
-            SwitchButtonActive();
             Debug.Log("Create Room");
-            PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlyaerPerRoom });
-        }
-        else
-        {
-            Debug.LogFormat("Connect : {0}", gameVersion);
-
-            PhotonNetwork.GameVersion = gameVersion;
-            // 포톤 클라우드에 접속을 시작하는 지점
-            // 접속에 성공하면 OnConnectedToMaster 메서드 호출
-            PhotonNetwork.ConnectUsingSettings();
+            PhotonNetwork.CreateRoom(System.String.Format("{0:D5}", PhotonNetwork.CountOfRooms + 1), roomopt);
+            SwitchButtonActive();
         }
     }
     // Connect Button이 눌러지면 호출
@@ -98,28 +111,14 @@ public class LoginManager : MonoBehaviourPunCallbacks
             // 포톤 클라우드에 연결되어 있을때 랜덤 룸에 입장시도
             if (PhotonNetwork.IsConnected)
                     PhotonNetwork.JoinRandomRoom();
-            else
-            {
-                // 포톤 클라우드에 연결되어 있지 않은 경우 포톤 클라우드에 접속을 시작
-                Debug.LogFormat("Connect : {0}", gameVersion);
-
-                PhotonNetwork.GameVersion = gameVersion;
-                // 접속에 성공하면 OnConnectedToMaster 메서드 호출
-                PhotonNetwork.ConnectUsingSettings();
-            }
-        }
-        else if(RoomID.Length < 5)
-        {
-            Debug.Log("RoomID must Numbers of 5!");
-            return;
         }
         else
         {
-            if (PhotonNetwork.IsConnected)
+            if (RoomIDCompare())
                 PhotonNetwork.JoinRoom(RoomID);
             else
             {
-                Debug.LogWarning("Join but No Connection master!");
+                Debug.LogWarning("Couldn't Fine the RoomID!");
                 return;
             }
         }
@@ -129,6 +128,14 @@ public class LoginManager : MonoBehaviourPunCallbacks
     public void Connect()
     {
         Debug.Log("Connect Call!");
+
+        Debug.LogFormat("Connect : {0}", gameVersion);
+
+        PhotonNetwork.GameVersion = gameVersion;
+        // 포톤 클라우드에 접속을 시작하는 지점
+        // 접속에 성공하면 OnConnectedToMaster 메서드 호출
+        PhotonNetwork.ConnectUsingSettings();
+
         // NickName UI 활성화
         nickNameUIGo.SetActive(false);
         // RoomID UI 비활성화
@@ -140,19 +147,6 @@ public class LoginManager : MonoBehaviourPunCallbacks
         // 포톤 클라우드에 해당 nickName으로 접속했다는 로그 출력
         Debug.LogFormat("Connected to Master: {0}", nickName);
 
-        // 방참가/방생성 버튼과의 상호작용 비활성화
-        SwitchButtonActive();
-
-        // 포톤 클라우드 내 랜덤한 룸에 접속 시도
-        if (isCreate)
-        {
-            Debug.Log("Create Room");
-            PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlyaerPerRoom });
-        }
-        else
-        {
-            PhotonNetwork.JoinRandomRoom();
-        }
     }
 
     public override void OnDisconnected(DisconnectCause cause)
@@ -160,7 +154,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
         // 룸에서 연결이 끊어진 경우
         Debug.LogWarningFormat("Disconnected: {0}", cause);
 
-        createRoomButton.interactable = true;
+        ButtonActive();
     }
     public override void OnJoinedRoom()
     {
@@ -175,7 +169,6 @@ public class LoginManager : MonoBehaviourPunCallbacks
     {
         Debug.LogErrorFormat("JoinRandomFailed({0}): {1}", returnCode, message);
 
-        createRoomButton.interactable = true;
-        joinRoomButton.interactable = true;
+        ButtonActive();
     }
 }

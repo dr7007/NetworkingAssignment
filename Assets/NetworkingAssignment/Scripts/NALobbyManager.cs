@@ -9,26 +9,16 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject playerPrefab = null;
 
     // 각 클라이언트 마다 생성된 플레이어 게임 오브젝트를 배열로 관리
-    private GameObject[] playerGoList = new GameObject[4];
+    private GameObject[] playerGoList = new GameObject[3];
 
     private NAPlayerCtrl playerCtrl = null;
-    private NAPlayerCtrl otherCtrl = null;
+
     private GameObject uiMngGo = null;
     private TextMeshProUGUI uiNRoom = null;
     private TextMeshProUGUI uiNPlayer = null;
 
-    private int curNumP = 0;
-
     private void Start()
     {
-        uiMngGo = FindAnyObjectByType<Canvas>().gameObject;
-        uiNRoom = uiMngGo.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-        uiNPlayer = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-        curNumP = 0;
-
-        uiNRoom.text = "Room ID : \nNULL";
-        uiNPlayer.text = "Number of Player : \n0/4";
-
         if (playerPrefab != null)
         {
             //
@@ -39,6 +29,14 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
 
             Invoke("SpawnPlayer", 0.5f);
         }
+
+        uiMngGo = FindAnyObjectByType<Canvas>().gameObject;
+        uiNRoom = uiMngGo.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        uiNPlayer = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+
+        uiNRoom.text = ("RoomID :\n" + PhotonNetwork.CurrentRoom.Name).ToString();
+        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
+
     }
 
     private void SpawnPlayer()
@@ -46,13 +44,15 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
         GameObject go = PhotonNetwork.Instantiate(
                 playerPrefab.name,
                 new Vector3(
-                    Random.Range(-10.0f, 10.0f),
                     0.0f,
-                    Random.Range(-10.0f, 10.0f)),
+                    0.0f,
+                    0.0f),
                 Quaternion.identity,
                 0);
         playerCtrl = go.GetComponent<NAPlayerCtrl>();
-        ++curNumP;
+
+
+
 
         // Remote Procedure Call
         photonView.RPC("ApplyPlayerList", RpcTarget.All);
@@ -69,8 +69,14 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
     // 플레이어가 입장할 때 호출되는 함수
     public override void OnPlayerEnteredRoom(Photon.Realtime.Player otherPlayer)
     {
+        DefaultPool pool = PhotonNetwork.PrefabPool as DefaultPool;
+        if (!pool.ResourceCache.ContainsKey(playerPrefab.name))
+            pool.ResourceCache.Add(playerPrefab.name, playerPrefab);
+
         Debug.LogFormat("Player Entered Room: {0}",
                         otherPlayer.NickName);
+
+        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
 
         // 누군가 접속하면 전체 클라이언트에서 함수 호출
         //photonView.RPC("ApplyPlayerList", RpcTarget.All);
@@ -79,14 +85,10 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ApplyPlayerList()
     {
-        // 현재 방에 접속해 있는 플레이어의 수 로그 및 UI에 표기
+        // 현재 방에 접속해 있는 플레이어의 수 로그에 표기
         Debug.LogError("CurrentRoom PlayerCount : " + PhotonNetwork.CurrentRoom.PlayerCount);
-        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/4").ToString();
-        // 이동 필요... 구조상 여기 있을시 제대로 된 방 ID가 아님.
-        uiNRoom.text = ("RoomID :\n" + System.String.Format("{0:D5}", PhotonNetwork.CountOfRooms + 1)).ToString();
 
         // 현재 생성되어 있는 모든 포톤뷰 가져오기
-        //PhotonView[] photonViews = FindObjectsOfType<PhotonView>();
         PhotonView[] photonViews =
             FindObjectsByType<PhotonView>(FindObjectsSortMode.None);
 
@@ -110,9 +112,6 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
                 // 포톤뷰의 액터넘버
                 int viewNum = photonViews[j].Owner.ActorNumber;
 
-                // 다른 플레이어의 색상 부여 - 과제 1 (완료)
-                otherCtrl = photonViews[j].gameObject.GetComponent<NAPlayerCtrl>();
-
                 // 접속중인 플레이어의 액터넘버
                 int playerNum = PhotonNetwork.CurrentRoom.Players[key].ActorNumber;
 
@@ -123,14 +122,25 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
                     playerGoList[playerNum - 1] = photonViews[j].gameObject;
                     // 게임오브젝트 이름도 알아보기 쉽게 변경
                     playerGoList[playerNum - 1].name = "Player_" + photonViews[j].Owner.NickName;
+
                 }
             }
         }
 
         // 디버그용
         PrintPlayerList();
+
+        // 게임 오브젝트 위치 정렬
+        SetPositionPlayer();
     }
 
+    private void SetPositionPlayer()
+    {
+        foreach(GameObject player in playerGoList)
+        {
+
+        }
+    }
     private void PrintPlayerList()
     {
         foreach (GameObject go in playerGoList)
@@ -147,6 +157,7 @@ public class NALobbyManager : MonoBehaviourPunCallbacks
     {
         Debug.LogFormat("Player Left Room: {0}",
                         otherPlayer.NickName);
+        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
     }
 
     public void LeaveRoom()
