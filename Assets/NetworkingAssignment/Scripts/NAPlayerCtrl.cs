@@ -1,46 +1,26 @@
 using UnityEngine;
 
 using Photon.Pun;
-using Photon.Realtime;
 using TMPro;
 
 
 public class NAPlayerCtrl : MonoBehaviourPun
 {
-    [SerializeField]
-    private string nickName = null;
-    [SerializeField]
-    private int curIdx = 0;
+    public TextMeshProUGUI nickNameText; // 닉네임 표시용 TextMeshProUGUI
 
-    private RectTransform rectTr = null;
-    private TextMeshProUGUI playerUI = null;
-
-    private void Awake()
+    void Start()
     {
-        rectTr = this.GetComponentInChildren<RectTransform>();
-        playerUI = this.GetComponentInChildren<TextMeshProUGUI>();
-    }
-
-    private void Start()
-    {
-        nickName = PhotonNetwork.NickName;
-        playerUI.text = nickName;
-    }
-
-    private void Update()
-    {
-        if (!photonView.IsMine) return;
-        rectTr.anchoredPosition = new Vector2(0f, -400f - curIdx * 100);
-
+        if (photonView.IsMine)
+        {
+            // 본인의 닉네임 설정
+            photonView.RPC("SetNickName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+        }
     }
 
     [PunRPC]
-    public void ApplyIndex(int _idx)
+    void SetNickName(string nickName)
     {
-        curIdx = _idx;
-        Debug.LogErrorFormat("{0} curIdx: {1}",
-            PhotonNetwork.NickName,
-            curIdx
-            );
+        // 닉네임을 모든 클라이언트에서 동기화
+        nickNameText.text = nickName;
     }
 }

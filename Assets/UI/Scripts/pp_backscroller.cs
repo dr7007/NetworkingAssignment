@@ -16,7 +16,7 @@ public class BackgroundScroller : MonoBehaviour
         imageWidth = image1.rect.width;
         halfcanvasWidth = canvasRt.sizeDelta.x / 2;
 
-        image1.anchoredPosition = new Vector2(0f, 0f);
+        image1.anchoredPosition = new Vector2(halfcanvasWidth, 0f);
         // 두 번째 이미지를 첫 번째 이미지의 오른쪽에 위치시킴
         image2.anchoredPosition = new Vector2(image1.anchoredPosition.x + imageWidth, 0f);
     }

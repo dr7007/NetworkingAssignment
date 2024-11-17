@@ -1,174 +1,111 @@
 using UnityEngine;
-
 using Photon.Pun;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Collections;
+using Photon.Realtime;
 
 public class NALobbyManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private GameObject playerPrefab = null;
-
-    // 각 클라이언트 마다 생성된 플레이어 게임 오브젝트를 배열로 관리
-    private GameObject[] playerGoList = new GameObject[3];
-
-    private NAPlayerCtrl playerCtrl = null;
-
-    private GameObject uiMngGo = null;
-    private TextMeshProUGUI uiNRoom = null;
-    private TextMeshProUGUI uiNPlayer = null;
+    [SerializeField] private GameObject playerUIPrefab; // UI 항목용 프리팹 (TextMeshPro 포함)
+    [SerializeField] private Transform userListParent; // UI 목록의 부모 Transform
+    [SerializeField] private GameObject startImage; // "Now Start" UI 이미지
+    [SerializeField] private float displayDuration = 3f; // 이미지 표시 시간
 
     private void Start()
     {
-        if (playerPrefab != null)
-        {
-            //
-            DefaultPool pool = PhotonNetwork.PrefabPool as DefaultPool;
-            if (!pool.ResourceCache.ContainsKey(playerPrefab.name))
-                pool.ResourceCache.Add(playerPrefab.name, playerPrefab);
-            //
+        // 시작 이미지를 숨김
+        if (startImage != null)
+            startImage.SetActive(false);
 
-            Invoke("SpawnPlayer", 0.5f);
+        UpdateRoomInfo();
+        UpdatePlayerList();
+    }
+
+    public override void OnJoinedRoom()
+    {
+        base.OnJoinedRoom();
+        UpdatePlayerList();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        base.OnPlayerEnteredRoom(newPlayer);
+        UpdatePlayerList();
+        UpdateRoomInfo();
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        base.OnPlayerLeftRoom(otherPlayer);
+        UpdatePlayerList();
+        UpdateRoomInfo();
+    }
+
+    private void UpdatePlayerList()
+    {
+        // 기존 UI 닉네임 항목 모두 삭제
+        foreach (Transform child in userListParent)
+        {
+            Destroy(child.gameObject);
         }
 
-        uiMngGo = FindFirstObjectByType<Canvas>().gameObject;
-        uiNRoom = uiMngGo.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-        uiNPlayer = uiMngGo.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-
-        uiNRoom.text = (PhotonNetwork.CurrentRoom.Name).ToString();
-        uiNPlayer.text = (PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
-
-    }
-
-    private void SpawnPlayer()
-    {
-        GameObject go = PhotonNetwork.Instantiate(
-                playerPrefab.name,
-                new Vector3(
-                    0.0f,
-                    0.0f,
-                    0.0f),
-                Quaternion.identity,
-                0);
-        playerCtrl = go.GetComponent<NAPlayerCtrl>();
-
-
-
-
-        // Remote Procedure Call
-        photonView.RPC("ApplyPlayerList", RpcTarget.All);
-    }
-
-    // PhotonNetwork.LeaveRooom 함수가 호출되면 호출
-    public override void OnLeftRoom()
-    {
-        Debug.Log("Left Room");
-
-        SceneManager.LoadScene("LoginScene");
-    }
-
-    // 플레이어가 입장할 때 호출되는 함수
-    public override void OnPlayerEnteredRoom(Photon.Realtime.Player otherPlayer)
-    {
-        DefaultPool pool = PhotonNetwork.PrefabPool as DefaultPool;
-        if (!pool.ResourceCache.ContainsKey(playerPrefab.name))
-            pool.ResourceCache.Add(playerPrefab.name, playerPrefab);
-
-        Debug.LogFormat("Player Entered Room: {0}",
-                        otherPlayer.NickName);
-
-        uiNPlayer.text = (PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
-
-        // 누군가 접속하면 전체 클라이언트에서 함수 호출
-        //photonView.RPC("ApplyPlayerList", RpcTarget.All);
-    }
-
-    [PunRPC]
-    public void ApplyPlayerList()
-    {
-        // 현재 방에 접속해 있는 플레이어의 수 로그에 표기
-        Debug.LogError("CurrentRoom PlayerCount : " + PhotonNetwork.CurrentRoom.PlayerCount);
-
-        // 현재 생성되어 있는 모든 포톤뷰 가져오기
-        PhotonView[] photonViews =
-            FindObjectsByType<PhotonView>(FindObjectsSortMode.None);
-
-        // 매번 재정렬을 하는게 좋으므로 플레이어 게임오브젝트 리스트를 초기화
-        System.Array.Clear(playerGoList, 0, playerGoList.Length);
-
-        // 현재 생성되어 있는 포톤뷰 전체와
-        // 접속중인 플레이어들의 액터넘버를 비교해,
-        // 액터넘버를 기준으로 플레이어 게임오브젝트 배열을 채움
-        for (int i = 0; i < PhotonNetwork.CurrentRoom.PlayerCount; ++i)
+        // Room 내 모든 플레이어의 UI를 생성
+        foreach (Player player in PhotonNetwork.PlayerList)
         {
-            // 키는 0이 아닌 1부터 시작
-            int key = i + 1;
-            for (int j = 0; j < photonViews.Length; ++j)
-            {
-                // 만약 PhotonNetwork.Instantiate를 통해서 생성된 포톤뷰가 아니라면 넘김
-                if (photonViews[j].isRuntimeInstantiated == false) continue;
-                // 만약 현재 키 값이 딕셔너리 내에 존재하지 않는다면 넘김
-                if (PhotonNetwork.CurrentRoom.Players.ContainsKey(key) == false) continue;
-
-                // 포톤뷰의 액터넘버
-                int viewNum = photonViews[j].Owner.ActorNumber;
-
-                // 접속중인 플레이어의 액터넘버
-                int playerNum = PhotonNetwork.CurrentRoom.Players[key].ActorNumber;
-
-                // 액터넘버가 같은 오브젝트가 있다면,
-                if (viewNum == playerNum)
-                {
-                    // 실제 게임오브젝트를 배열에 추가
-                    playerGoList[playerNum - 1] = photonViews[j].gameObject;
-                    // 게임오브젝트 이름도 알아보기 쉽게 변경
-                    playerGoList[playerNum - 1].name = "Player_" + photonViews[j].Owner.NickName;
-
-                }
-            }
-        }
-
-        // 디버그용
-        PrintPlayerList();
-
-        // 게임 오브젝트 위치 정렬
-        SetPositionPlayer();
-    }
-
-    private void SetPositionPlayer()
-    {
-        for(int i = 0; i > playerGoList.Length; ++i)
-        {
-            playerGoList[i].GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, -500f - 100 * i);
-        }
-    }
-    private void PrintPlayerList()
-    {
-        foreach (GameObject go in playerGoList)
-        {
-            if (go != null)
-            {
-                Debug.LogError(go.name);
-            }
+            GameObject playerUI = Instantiate(playerUIPrefab, userListParent); // 프리팹 생성
+            var textComponent = playerUI.GetComponentInChildren<TextMeshProUGUI>();
+            textComponent.text = player.NickName; // 닉네임 설정
         }
     }
 
-    // 플레이어가 나갈 때 호출되는 함수
-    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    private void UpdateRoomInfo()
     {
-        Debug.LogFormat("Player Left Room: {0}",
-                        otherPlayer.NickName);
-        uiNPlayer.text = ("Number of Player : \n" + PhotonNetwork.CurrentRoom.PlayerCount + "/3").ToString();
-    }
+        // Room 이름과 플레이어 수 갱신
+        var roomNameText = GameObject.Find("UIRoomNum").GetComponent<TextMeshProUGUI>();
+        var playerCountText = GameObject.Find("UIPlayerNum").GetComponent<TextMeshProUGUI>();
 
-    public void LeaveRoom()
-    {
-        Debug.Log("Leave Room");
-
-        PhotonNetwork.LeaveRoom();
+        roomNameText.text = PhotonNetwork.CurrentRoom.Name;
+        playerCountText.text = PhotonNetwork.CurrentRoom.PlayerCount + "/3";
     }
 
     public void TempNext()
     {
+        // 방장이 게임 시작을 호출
+        if (PhotonNetwork.IsMasterClient)
+        {
+            photonView.RPC("StartGame", RpcTarget.All);
+        }
+        else
+        {
+            Debug.Log("Only the MasterClient can start the game.");
+        }
+    }
+
+    [PunRPC]
+    private void StartGame()
+    {
+        userListParent.gameObject.SetActive(false);
+        FindFirstObjectByType<Canvas>().gameObject.SetActive(false);
+        StartCoroutine(ShowStartImageAndLoadScene());
+    }
+
+    private IEnumerator ShowStartImageAndLoadScene()
+    {
+        if (startImage != null)
+            startImage.SetActive(true);
+
+        yield return new WaitForSeconds(displayDuration);
+
+        if (startImage != null)
+            startImage.SetActive(false);
+
         SceneManager.LoadScene("GameScene");
+    }
+
+    public void LeaveRoom()
+    {
+        PhotonNetwork.LeaveRoom();
+        SceneManager.LoadScene("LoginScene");
     }
 }
